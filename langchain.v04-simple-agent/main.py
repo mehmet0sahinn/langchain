@@ -7,7 +7,6 @@ load_dotenv()
 
 from langchain_openai import ChatOpenAI
 from langchain_community.tools.tavily_search import TavilySearchResults
-from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import HumanMessage
 
@@ -18,23 +17,15 @@ model = ChatOpenAI()
 search = TavilySearchResults(max_results=2)
 tools = [search]
 
-# 3. Bind Model and Tools
-model_with_tools = model.bind_tools(tools)
-
-# 4. Memory
-memory = SqliteSaver.from_conn_string(":memory:")
-
-# 5. ReACT Agent Executor
-agent_executor = create_react_agent(model, tools, checkpointer=memory)
+# 3. ReACT Agent Executor
+agent_executor = create_react_agent(model, tools)
 config = {"configurable": {"thread_id": "pasha00"}}
 
-
 if __name__ == '__main__':
-    while True:
-        user_input = input("> ")
+    while (user := input("> ")) != "exit":
         for chunk in agent_executor.stream(
-            {"messages": [HumanMessage(content=user_input)]},
-            config
+            {"messages": [HumanMessage(content=user)]},
+            config,
         ):
             print(chunk)
             print("------------------")
