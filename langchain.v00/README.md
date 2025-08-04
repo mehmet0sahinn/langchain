@@ -1,8 +1,6 @@
-## langchain practice
+## langchain v00 practice
 
----
-
-# notebooks
+## notebooks
 
 - 01-chat_models.ipynb
 - 02-prompts.ipynb
