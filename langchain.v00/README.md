@@ -1,3 +1,12 @@
-# langchain.v00
+## langchain practice
 
-A hands‑on playground for Retrieval‑Augmented Generation (RAG) and tool‑using agents built with LangChain.The repository contains Jupyter notebooks that progress from a vanilla RAG pipeline to memory‑aware chat and finally to a web‑searching agent.
+---
+
+# notebooks
+
+- 01-chat_models.ipynb
+- 02-prompts.ipynb
+- 03-chains.ipynb
+- 04-rag.ipynb
+- 05-memo.ipynb
+- 06-web-agents.ipynb
