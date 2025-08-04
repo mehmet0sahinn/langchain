@@ -1,5 +1,5 @@
 """
-ReAct Chat CLI – LangChain + Tavily demo
+ReAct Chat CLI - LangChain + Tavily demo
 """
 
 from dotenv import load_dotenv
