@@ -1,5 +1,3 @@
-## langchain v00 practice
-
 ## notebooks
 
 - 01-chat_models.ipynb
