@@ -1,80 +1,70 @@
 """
-RAG Demo – Botpress “AI Agent” Article
-======================================
-
-Fetches a blog post, splits it into chunks, indexes the chunks
-in a Chroma vector database, and answers questions with a simple RAG
-pipeline.
-
+RAG Demo
+---
 Usage
------
+
 $ python main.py "What is the difference between an AI agent and a traditional chatbot?"
 """
+from dotenv import load_dotenv
+load_dotenv()  
 
-from __future__ import annotations
+import bs4
+
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_community.document_loaders import WebBaseLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_chroma import Chroma
+from langchain import hub
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
 
 import argparse
-import bs4
-from dotenv import load_dotenv
-from langchain import hub
-from langchain_chroma import Chroma
-from langchain_community.document_loaders import WebBaseLoader
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-# --------------------------------------------------------------------------- #
-# 1) Environment & LLM                                                        #
-# --------------------------------------------------------------------------- #
-load_dotenv()                    # reads OPENAI_API_KEY from .env
-llm = ChatOpenAI()               # default temperature = 0.7
+# 1 . Load the Model
+model = ChatOpenAI() 
 
-# --------------------------------------------------------------------------- #
-# 2) Load the article – strip navigation noise                                #
-# --------------------------------------------------------------------------- #
+# 2. Load the Content
 loader = WebBaseLoader(
     web_paths=("https://botpress.com/tr/blog/what-is-an-ai-agent/",),
     bs_kwargs=dict(
-        parse_only=bs4.SoupStrainer(           # keep only these tags
+        parse_only=bs4.SoupStrainer(
             name=["p", "li", "h1", "h2", "h3", "h4"]
         )
     ),
 )
 docs = loader.load()
 
-# --------------------------------------------------------------------------- #
-# 3) Chunk + Embed + Retriever                                                #
-# --------------------------------------------------------------------------- #
+# 3. Chunk and Split the Content
 text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=1_000,
     chunk_overlap=200,
 )
 splits = text_splitter.split_documents(docs)
 
-# Keep Chroma in-memory; add persist_directory if you want disk storage
+# 4. Embed the Content
 vectorstore = Chroma.from_documents(splits, OpenAIEmbeddings())
+
+# 5. Retriever
 retriever = vectorstore.as_retriever()
 
-# --------------------------------------------------------------------------- #
-# 4) RAG chain                                                                #
-# --------------------------------------------------------------------------- #
-prompt = hub.pull("rlm/rag-prompt")  # generic RAG prompt template
+# 6. RAG Chat Prompt Template
+prompt = hub.pull("rlm/rag-prompt") 
 
+# 7. Parser
 def format_docs(documents):
-    """Concatenate retrieved docs into a single string."""
+    """
+    Concatenate retrieved docs into a single string.
+    """
     return "\n\n".join(d.page_content for d in documents)
 
 rag_chain = (
     {"context": retriever | format_docs, "question": RunnablePassthrough()}
     | prompt
-    | llm
+    | model
     | StrOutputParser()
 )
 
-# --------------------------------------------------------------------------- #
-# 5) Minimal CLI                                                              #
-# --------------------------------------------------------------------------- #
+# 8. main
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run a RAG query")
     parser.add_argument("question", nargs="+", help="Question to ask")
@@ -83,7 +73,7 @@ def main() -> None:
 
     for chunk in rag_chain.stream(question):
         print(chunk, end="", flush=True)
-    print()  # final newline
+    print()
 
 if __name__ == "__main__":
     main()
