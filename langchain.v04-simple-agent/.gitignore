@@ -1,0 +1,4 @@
+.env
+.venv
+main_version00.py
+chat_history.sqlite
